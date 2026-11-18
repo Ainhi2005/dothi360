@@ -1,0 +1,11 @@
+# Khai báo các file sinh ra, dependency, log, coverage và biến môi trường không đưa lên Git.
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+scratch/db-cleanup/
+scratch/
+admin-public/

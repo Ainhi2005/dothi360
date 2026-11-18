@@ -1,0 +1,20 @@
+import{FormEvent,useCallback,useEffect,useState}from'react';
+import{MapPinned,PenLine,Plus}from'lucide-react';
+import{AreaMapEditor}from'../components/AreaMapEditor';
+import{PageHeader}from'../components/PageHeader';
+import{PageState}from'../components/PageState';
+import{api,errorMessage}from'../lib/api';
+import type{Department}from'../types';
+
+type Geometry={type:'Polygon';coordinates:number[][][]};
+type Area={id:string;name:string;department_id:string;department_name:string;is_active:boolean;geometry:Geometry};
+
+export default function Areas(){
+  const[data,setData]=useState<Area[]>([]),[departments,setDepartments]=useState<Department[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[open,setOpen]=useState(false),[editing,setEditing]=useState<Area>(),[geometry,setGeometry]=useState<Geometry>();
+  const load=useCallback(async()=>{setLoading(true);try{const[areas,deps]=await Promise.all([api.get('/areas'),api.get('/departments')]);setData(areas.data.data);setDepartments(deps.data.data.filter((item:Department)=>item.is_active));setError('')}catch(e){setError(errorMessage(e))}finally{setLoading(false)}},[]);
+  useEffect(()=>{void load()},[load]);
+  const showEditor=(area?:Area)=>{setEditing(area);setGeometry(area?.geometry);setOpen(true)};
+  const save=async(event:FormEvent<HTMLFormElement>)=>{event.preventDefault();if(!geometry){setError('Vui lòng vẽ polygon địa bàn trên bản đồ');return}const form=new FormData(event.currentTarget);const payload={name:form.get('name'),department_id:form.get('department_id'),geometry,is_active:editing?.is_active??true};try{if(editing)await api.put(`/areas/${editing.id}`,payload);else await api.post('/areas',payload);setOpen(false);setEditing(undefined);setGeometry(undefined);await load()}catch(e){setError(errorMessage(e))}};
+  const deactivate=async(area:Area)=>{if(!confirm(`Ngừng sử dụng địa bàn “${area.name}”?`))return;try{await api.delete(`/areas/${area.id}`);await load()}catch(e){setError(errorMessage(e))}};
+  return <section><PageHeader title="Địa bàn phụ trách" parent="Tổ chức" description="Vẽ và quản lý polygon dùng trong phân công sự cố theo địa bàn." actions={<button className="button primary" onClick={()=>showEditor()}><Plus/> Thêm vùng</button>}/><article className="panel"><PageState loading={loading} error={error} empty={!loading&&!data.length} onRetry={()=>void load()}/>{!loading&&data.length>0&&<div className="table-wrap"><table><thead><tr><th>Vùng</th><th>Đơn vị</th><th>Hình học</th><th>Trạng thái</th><th/></tr></thead><tbody>{data.map(area=><tr key={area.id}><td><strong>{area.name}</strong></td><td>{area.department_name}</td><td><span className="status-text"><MapPinned/> Polygon · {Math.max(0,(area.geometry.coordinates[0]?.length??1)-1)} đỉnh</span></td><td><span className={`dot-label ${area.is_active?'active':'inactive'}`}>{area.is_active?'Đang dùng':'Tạm dừng'}</span></td><td><div className="card-actions"><button className="text-button" onClick={()=>showEditor(area)}><PenLine/> Chỉnh sửa</button>{area.is_active&&<button className="text-button danger-text" onClick={()=>void deactivate(area)}>Vô hiệu hóa</button>}</div></td></tr>)}</tbody></table></div>}</article>{open&&<div className="modal-backdrop"><form className="modal area-modal" onSubmit={save}><h2>{editing?'Chỉnh sửa địa bàn':'Thêm địa bàn phụ trách'}</h2><div className="form-grid"><label>Tên vùng<input name="name" defaultValue={editing?.name} required/></label><label>Đơn vị<select name="department_id" defaultValue={editing?.department_id} required><option value="">Chọn đơn vị</option>{departments.map(department=><option key={department.id} value={department.id}>{department.name}</option>)}</select></label></div><AreaMapEditor value={geometry} areas={data.filter(item=>item.id!==editing?.id&&item.is_active)} onChange={setGeometry}/><div className="modal-actions"><button type="button" className="button secondary" onClick={()=>setOpen(false)}>Hủy</button><button className="button primary" disabled={!geometry}>Lưu địa bàn</button></div></form></div>}</section>;
+}

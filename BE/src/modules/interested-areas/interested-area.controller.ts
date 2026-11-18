@@ -1,0 +1,12 @@
+import { NextFunction, Request, Response } from 'express';
+import { InterestedAreaService } from './interested-area.service';
+const service=new InterestedAreaService();
+export const listMine=async(q:Request,r:Response,n:NextFunction)=>{try{r.json({success:true,data:await service.listMine(q.user.id)})}catch(e){n(e)}};
+export const create=async(q:Request,r:Response,n:NextFunction)=>{try{r.status(201).json({success:true,data:await service.create(q.user.id,q.body)})}catch(e){n(e)}};
+export const update=async(q:Request,r:Response,n:NextFunction)=>{try{r.json({success:true,data:await service.update(q.user.id,String(q.params.id),q.body)})}catch(e){n(e)}};
+export const remove=async(q:Request,r:Response,n:NextFunction)=>{try{await service.remove(q.user.id,String(q.params.id));r.json({success:true,message:'Đã ngừng theo dõi khu vực'})}catch(e){n(e)}};
+export const incidents=async(q:Request,r:Response,n:NextFunction)=>{try{r.json({success:true,...await service.incidents(q.user.id,String(q.params.id),Number(q.query.page)||1,Number(q.query.limit)||20)})}catch(e){n(e)}};
+export const adminSummary=async(_q:Request,r:Response,n:NextFunction)=>{try{r.json({success:true,data:await service.adminSummary()})}catch(e){n(e)}};
+export const adminList=async(q:Request,r:Response,n:NextFunction)=>{try{r.json({success:true,...await service.adminList(Number(q.query.page)||1,Number(q.query.limit)||30,String(q.query.q??''))})}catch(e){n(e)}};
+export const adminStatus=async(q:Request,r:Response,n:NextFunction)=>{try{r.json({success:true,data:await service.adminSetStatus(String(q.params.id),q.body.is_active)})}catch(e){n(e)}};
+export const searchPlaces=async(q:Request,r:Response,n:NextFunction)=>{try{r.json({success:true,data:await service.searchPlaces(String(q.query.q??''),q.query.lat===undefined?undefined:Number(q.query.lat),q.query.lng===undefined?undefined:Number(q.query.lng))})}catch(e){n(e)}};

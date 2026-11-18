@@ -1,0 +1,2 @@
+import{applicationDefault,cert,getApps,initializeApp}from'firebase-admin/app';import{getMessaging}from'firebase-admin/messaging';import{env}from'./env';
+export function firebaseMessaging(){if(!getApps().length){const credential=env.FIREBASE_SERVICE_ACCOUNT_BASE64?cert(JSON.parse(Buffer.from(env.FIREBASE_SERVICE_ACCOUNT_BASE64,'base64').toString('utf8'))):applicationDefault();initializeApp({credential});}return getMessaging();}

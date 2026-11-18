@@ -1,0 +1,1 @@
+import{NextFunction,Request,Response}from'express';import{AuditLogService}from'./audit-log.service';const s=new AuditLogService();export const list=async(q:Request,r:Response,n:NextFunction)=>{try{r.json({success:true,...await s.list(Number(q.query.page)||1,Number(q.query.limit)||50)})}catch(e){n(e)}};

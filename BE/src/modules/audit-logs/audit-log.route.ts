@@ -1,0 +1,1 @@
+import{Router}from'express';import{authenticate}from'../../common/middlewares/authenticate.middleware';import{authorizeRole}from'../../common/middlewares/authorize.middleware';import{ROLES}from'../../common/constants/roles';import{list}from'./audit-log.controller';const r=Router();r.get('/',authenticate,authorizeRole(ROLES.ADMIN),list);export default r;

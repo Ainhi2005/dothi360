@@ -1,0 +1,18 @@
+import { Router } from 'express';
+import { authenticate } from '../../common/middlewares/authenticate.middleware';
+import { authorizeRole } from '../../common/middlewares/authorize.middleware';
+import { validateBody } from '../../common/middlewares/validate.middleware';
+import { ROLES } from '../../common/constants/roles';
+import { adminList,adminStatus,adminSummary,create,incidents,listMine,remove,searchPlaces,update } from './interested-area.controller';
+import { interestedAreaSchema,interestedAreaStatusSchema } from './interested-area.validation';
+const router=Router();router.use(authenticate);
+router.get('/admin/summary',authorizeRole(ROLES.ADMIN),adminSummary);
+router.get('/admin',authorizeRole(ROLES.ADMIN),adminList);
+router.patch('/admin/:id/status',authorizeRole(ROLES.ADMIN),validateBody(interestedAreaStatusSchema),adminStatus);
+router.get('/search/places',authorizeRole(ROLES.CITIZEN),searchPlaces);
+router.get('/',authorizeRole(ROLES.CITIZEN),listMine);
+router.post('/',authorizeRole(ROLES.CITIZEN),validateBody(interestedAreaSchema),create);
+router.get('/:id/incidents',authorizeRole(ROLES.CITIZEN),incidents);
+router.put('/:id',authorizeRole(ROLES.CITIZEN),validateBody(interestedAreaSchema),update);
+router.delete('/:id',authorizeRole(ROLES.CITIZEN),remove);
+export default router;

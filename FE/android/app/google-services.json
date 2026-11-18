@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1005369789946",
+    "project_id": "do-thi-360",
+    "storage_bucket": "do-thi-360.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1005369789946:android:2367c458f40521b7bf6843",
+        "android_client_info": {
+          "package_name": "com.example.urban_issue_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCS_tzCpXmfemLsNj16gxCIuJGsFMzSLE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
