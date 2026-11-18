@@ -87,6 +87,7 @@ class ReviewMediaGallery extends StatelessWidget {
     if (files.isNotEmpty) {
       return Image.file(
         files[index],
+        cacheWidth: AppDimens.mediaPreviewDecodeWidth,
         width: double.infinity,
         height: double.infinity,
         fit: BoxFit.cover,

@@ -114,7 +114,8 @@ class _OfficerUpdateStatusPageState
       if (showFeedback && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Đã lưu bản nháp tiến độ (Mức độ: $progressPercent%)'),
+            content:
+                Text('Đã lưu bản nháp tiến độ (Mức độ: $progressPercent%)'),
             backgroundColor: AppColors.primary,
           ),
         );
@@ -566,6 +567,7 @@ class _OfficerUpdateStatusPageState
                                 BorderRadius.circular(AppDimens.radiusSm),
                             child: Image.file(
                               file,
+                              cacheWidth: AppDimens.mediaThumbnailDecodeWidth,
                               width: 88,
                               height: 88,
                               fit: BoxFit.cover,

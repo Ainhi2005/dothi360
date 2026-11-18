@@ -220,6 +220,7 @@ class ImagePickerCard extends ConsumerWidget {
             children: [
               Image.file(
                 primaryFile,
+                cacheWidth: AppDimens.mediaPreviewDecodeWidth,
                 width: double.infinity,
                 height: 180,
                 fit: BoxFit.cover,
@@ -313,6 +314,7 @@ class ImagePickerCard extends ConsumerWidget {
                       ),
                       child: Image.file(
                         file,
+                        cacheWidth: AppDimens.mediaThumbnailDecodeWidth,
                         width: 68,
                         height: 68,
                         fit: BoxFit.cover,

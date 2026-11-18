@@ -13,7 +13,9 @@ class DescriptionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(createReportProvider);
+    final description = ref.watch(
+      createReportProvider.select((state) => state.description),
+    );
     final controller = ref.read(createReportProvider.notifier);
 
     return AppCard(
@@ -54,7 +56,7 @@ class DescriptionCard extends ConsumerWidget {
           ),
           const SizedBox(height: AppDimens.spacingMd),
           TextFormField(
-            initialValue: state.description,
+            initialValue: description,
             maxLines: 3,
             maxLength: 500,
             onChanged: controller.updateDescription,
@@ -80,7 +82,7 @@ class DescriptionCard extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(AppDimens.radiusSm),
                 borderSide: const BorderSide(color: AppColors.primary),
               ),
-              counterText: '${state.description.length}/500',
+              counterText: '${description.length}/500',
               counterStyle: AppTextStyles.caption.copyWith(
                 color: AppColors.textSecondary,
               ),

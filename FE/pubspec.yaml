@@ -1,7 +1,7 @@
 name: urban_issue_app
 description: Giao dien he thong phan anh su co do thi
 publish_to: "none"
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ">=3.5.0 <4.0.0"
@@ -36,14 +36,3 @@ flutter:
   assets:
     - assets/HaNoi/
     - assets/images/
-    - assets/images/gop_y.png
-    - assets/images/background/
-    - assets/images/thongtincanhan.png
-    - assets/images/doimatkhau.png
-    - assets/images/bell_3387347.png
-    - assets/images/quyenvitri.png
-    - assets/images/globe_504448.png
-    - assets/images/ai_6985703.png
-    - assets/images/huongdankhancap.png
-    - assets/images/chínhachriengtu.png
-    - assets/images/lienhehotro.png

@@ -2,6 +2,10 @@
 class AppDimens {
   const AppDimens._();
 
+  // Decode local previews at display scale instead of full camera resolution.
+  static const int mediaPreviewDecodeWidth = 1200;
+  static const int mediaThumbnailDecodeWidth = 384;
+
   // ==========================================
   // 1. SPACING SCALE (Hệ thống khoảng cách 4px)
   // ==========================================

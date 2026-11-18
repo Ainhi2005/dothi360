@@ -304,17 +304,25 @@ class CreateReportController extends Notifier<CreateReportState> {
     if (state.uploadedMedia.isNotEmpty) return state.uploadedMedia;
     final files = state.media.isEmpty ? [state.image!] : state.media;
     final uploaded = <Map<String, dynamic>>[];
+    var lastProgressPercent = -1;
     for (var i = 0; i < files.length; i++) {
       final file = files[i];
       final form = FormData.fromMap({
         'file': await MultipartFile.fromFile(file.path,
             filename: file.path.split(Platform.pathSeparator).last)
       });
-      final response = await DioClient().dio.post('/media/upload',
-          data: form,
-          onSendProgress: (sent, total) => state = state.copyWith(
-              uploadProgress: (i + sent / total) / files.length,
-              analysisStage: 'uploading'));
+      final response = await DioClient().dio.post('/media/upload', data: form,
+          onSendProgress: (sent, total) {
+        if (total <= 0) return;
+        final progress = ((i + sent / total) / files.length).clamp(0.0, 1.0);
+        final percent = (progress * 100).floor();
+        if (percent == lastProgressPercent) return;
+        lastProgressPercent = percent;
+        state = state.copyWith(
+          uploadProgress: progress,
+          analysisStage: 'uploading',
+        );
+      });
       uploaded.add(Map<String, dynamic>.from(response.data['data']));
     }
     state = state.copyWith(uploadedMedia: uploaded);
