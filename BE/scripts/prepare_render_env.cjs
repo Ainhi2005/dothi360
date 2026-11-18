@@ -24,7 +24,7 @@ if (missing.length || !neon.DATABASE_URL) {
   process.exit(1);
 }
 const config = {
-  NODE_ENV: 'production', SERVE_ADMIN: 'true', DB_SSL: 'true', DATABASE_URL: neon.DATABASE_URL,
+  NODE_VERSION: '24.14.0', NODE_ENV: 'production', SERVE_ADMIN: 'true', DB_SSL: 'true', DATABASE_URL: neon.DATABASE_URL,
   CORS_ORIGINS: '',
   JWT_ACCESS_SECRET: existing.JWT_ACCESS_SECRET || randomBytes(48).toString('base64url'),
   JWT_REFRESH_SECRET: existing.JWT_REFRESH_SECRET || randomBytes(48).toString('base64url'),
