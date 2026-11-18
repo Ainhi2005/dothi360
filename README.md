@@ -2,6 +2,8 @@
 
 Hệ thống phản ánh sự cố đô thị tích hợp AI.
 
+Hướng dẫn cài APK, sử dụng theo vai trò và dựng môi trường riêng: [Hướng dẫn cài đặt và sử dụng](docs/HUONG_DAN_CAI_DAT_SU_DUNG_VA_TRIEN_KHAI.md).
+
 - `BE/`: API Express, TypeORM và PostgreSQL/PostGIS.
 - `Admin_FE/`: giao diện quản trị React.
 - `FE/`: ứng dụng Flutter.
