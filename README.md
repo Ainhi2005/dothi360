@@ -32,6 +32,19 @@ Tất cả tệp `.env.*.local` và `scratch/` bị Git bỏ qua. Không dùng l
 
 Sau triển khai, kiểm tra `/api/v1/health`, đăng nhập Admin và các luồng nghiệp vụ. Chỉ build APK cuối khi đã có địa chỉ HTTPS hoạt động, truyền địa chỉ API bằng `--dart-define=API_BASE_URL=https://TEN-MIEN/api/v1` theo cấu hình ứng dụng.
 
+Địa chỉ triển khai demo: https://dothi360.onrender.com (Admin), API tại `/api/v1`.
+
+Kiểm tra trực tuyến có thay đổi dữ liệu: `node BE/scripts/smoke_render.cjs --workflow`. Công cụ dùng cấu hình Neon và tài khoản demo trong các tệp riêng tại máy, đổi mật khẩu khởi tạo cho ba tài khoản thử, upload ảnh và tạo hồ sơ có nhãn `[KIỂM THỬ TRIỂN KHAI]` để chạy quy trình phân công/nghiệm thu. Mật khẩu được giữ tại `BE/.env.live-accounts.local`, kết quả tại `BE/scratch/render-smoke-report.json`; không đưa các tệp này lên Git. Chạy kiểm tra này chỉ trên dịch vụ demo nêu trên, không dùng cho database sản xuất có dữ liệu thật.
+
+Build APK demo kết nối dịch vụ:
+
+```sh
+cd FE
+flutter build apk --release --dart-define=APP_ENV=production --dart-define=API_BASE_URL=https://dothi360.onrender.com/api/v1
+```
+
+Cấu hình Android hiện ký bản release bằng khóa debug, phù hợp cài đặt demo nội bộ; bản phát hành lên cửa hàng cần khóa ký release riêng. Xác minh push hiển thị trên thiết bị cần cài APK và đăng ký token FCM từ thiết bị đó.
+
 ## Kiểm thử backend
 
 ```sh
