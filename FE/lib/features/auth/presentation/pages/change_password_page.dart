@@ -32,9 +32,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   }
 
   Future<void> _submit() async {
-    if (_newController.text.length < 10 || _newController.text.length > 128) {
+    if (_newController.text.length < 6 || _newController.text.length > 128) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Mật khẩu mới phải từ 10 đến 128 ký tự')));
+          content: Text('Mật khẩu mới phải từ 6 đến 128 ký tự')));
       return;
     }
     if (_newController.text != _confirmController.text) {

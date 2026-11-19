@@ -30,9 +30,9 @@ export function UserPasswordDialog({ user, self, onClose, onSaved }: {
       <p>Các phiên đăng nhập cũ của tài khoản này sẽ bị thu hồi.{self && ' Bạn sẽ được chuyển về trang đăng nhập sau khi lưu.'}</p>
       {error && <div className="alert" role="alert">{error}</div>}
       <fieldset disabled={busy}>
-        <label>Mật khẩu mới<input name="new_password" type="password" autoComplete="new-password" minLength={10} maxLength={128} required autoFocus/></label>
-        <small>Từ 10 đến 128 ký tự.</small>
-        <label>Xác nhận mật khẩu mới<input name="confirm_password" type="password" autoComplete="new-password" minLength={10} maxLength={128} required/></label>
+        <label>Mật khẩu mới<input name="new_password" type="password" autoComplete="new-password" minLength={6} maxLength={128} required autoFocus/></label>
+        <small>Từ 6 đến 128 ký tự.</small>
+        <label>Xác nhận mật khẩu mới<input name="confirm_password" type="password" autoComplete="new-password" minLength={6} maxLength={128} required/></label>
         <label className="password-option"><input name="must_change_password" type="checkbox"/>Yêu cầu đổi lại mật khẩu ở lần đăng nhập tiếp theo</label>
       </fieldset>
       <div className="modal-actions"><button type="button" className="button secondary" disabled={busy} onClick={onClose}>Hủy</button><button className="button primary" disabled={busy}>{busy ? 'Đang lưu…' : 'Lưu mật khẩu'}</button></div>

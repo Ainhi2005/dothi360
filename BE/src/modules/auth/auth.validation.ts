@@ -18,5 +18,5 @@ export const refreshSchema = z.object({
 
 export const changePasswordSchema = z.object({
   current_password: z.string().min(6, 'Mật khẩu hiện tại phải từ 6 ký tự'),
-  new_password: z.string().min(10, 'Mật khẩu mới phải từ 10 ký tự').max(128, 'Mật khẩu tối đa 128 ký tự'),
+  new_password: z.string().min(6, 'Mật khẩu mới phải từ 6 ký tự').max(128, 'Mật khẩu tối đa 128 ký tự'),
 });

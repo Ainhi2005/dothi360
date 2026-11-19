@@ -61,7 +61,7 @@ test('kiểm tra độ dài mật khẩu và tài khoản đích', async () => {
 test('đổi cho CITIZEN, OFFICER và ADMIN; thu hồi access/refresh cũ ngay', async () => {
   for (const key of ['citizen', 'officer', 'admin']) {
     const old = (await login(key)).body.data;
-    const password = `Changed-${key}-2026!`;
+    const password = key === 'citizen' ? '123456' : `Changed-${key}-2026!`;
     const result = await call(`/users/${users[key].id}/password`, adminToken, 'PATCH', { new_password: password });
     assert.equal(result.status, 200);
     assert.equal(result.body.data.requires_relogin, false);
