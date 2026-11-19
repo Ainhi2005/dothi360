@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { AiService } from '../../common/services/ai.service';
+import { ChatService } from './chat.service';
 
-const aiService = new AiService();
+const chatService = new ChatService();
 
 export const chatWithBot = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { message } = req.body;
+    const { message, history } = req.body;
     const userId = (req as any).user.id;
 
     if (!message) {
@@ -13,15 +13,17 @@ export const chatWithBot = async (req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    const reply = await aiService.chatWithFunctionCalling(userId, message);
+    const result = await chatService.reply(userId, message, history);
 
     res.status(200).json({
       success: true,
-      data: {
-        reply
-      }
+      data: result,
     });
   } catch (error) {
+    if ((error as any).code === 'AI_PROVIDER_UNAVAILABLE') {
+      res.status(503).json({ success: false, code: 'AI_PROVIDER_UNAVAILABLE', message: (error as any).message });
+      return;
+    }
     next(error);
   }
 };

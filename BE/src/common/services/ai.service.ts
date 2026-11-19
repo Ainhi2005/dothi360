@@ -1,7 +1,4 @@
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { GoogleGenAI } from '@google/genai';
-import { AppDataSource } from '../../database/data-source';
-import { Incident } from '../../modules/incidents/incident.entity';
 import { aiAllowedMediaHosts, env, geminiModels } from '../../config/env';
 import { z } from 'zod';
 import { detectMediaMime } from '../../modules/media/media.validation';
@@ -30,11 +27,9 @@ const analysisSchema=z.object({
 const officerAssistSchema=z.object({summary:z.string().max(1000),image_comparison:z.string().max(800),evidence_status:z.enum(['ENOUGH','MISSING','UNCLEAR']),missing_evidence:z.array(z.string().max(160)).max(8),suggested_progress_report:z.string().max(1000),suggested_checklist:z.array(z.string().max(180)).max(10),sla_risk:z.enum(['LOW','MEDIUM','HIGH']),sla_reason:z.string().max(500)});
 
 export class AiService {
-  private genAI: GoogleGenerativeAI;
   private interactionsAI: GoogleGenAI;
 
   constructor() {
-    this.genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY || '');
     this.interactionsAI = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY || '' });
   }
 
@@ -165,76 +160,4 @@ Bạn PHẢI trả về ĐÚNG MỘT chuỗi JSON (không markdown, không bọc
     }
   }
 
-  /**
-   * Tính năng 2: Chatbot với Function Calling (Truy xuất Database)
-   */
-  async chatWithFunctionCalling(userId: string, userMessage: string) {
-    try {
-      const model = this.genAI.getGenerativeModel({
-        model: env.GEMINI_MODEL,
-        systemInstruction: `Bạn là trợ lý ảo CSKH của Hệ thống Quản lý Sự cố Đô thị. Nhiệm vụ của bạn là hỗ trợ người dân. 
-Khi người dân hỏi về sự cố của họ (vd: "Sự cố của tôi sao rồi", "Đã xử lý chưa"), HÃY BẮT BUỘC gọi tool get_user_incidents_status để kiểm tra Database và trả lời bằng tiếng Việt thân thiện.`,
-        tools: [{
-          functionDeclarations: [
-            {
-              name: 'get_user_incidents_status',
-              description: 'Lấy danh sách các sự cố (incidents) mà người dùng hiện tại đã báo cáo để xem trạng thái xử lý.',
-              parameters: {
-                type: SchemaType.OBJECT,
-                properties: {
-                  limit: { type: SchemaType.INTEGER, description: 'Số lượng sự cố gần nhất cần lấy (mặc định 5)' }
-                },
-              }
-            }
-          ]
-        }]
-      });
-
-      const chat = model.startChat();
-      const result = await chat.sendMessage(userMessage);
-      const response = result.response;
-      
-      const functionCalls = response.functionCalls();
-      
-      if (functionCalls && functionCalls.length > 0) {
-        const call = functionCalls[0];
-        if (call.name === 'get_user_incidents_status') {
-           // AI yêu cầu gọi Database
-           console.log('AI đang gọi Database (Function Calling)...');
-           const limit = (call.args as any).limit || 5;
-           const incidentRepo = AppDataSource.getRepository(Incident);
-           const incidents = await incidentRepo.createQueryBuilder('incident')
-              .innerJoin('incident.reports', 'report', 'report.reporter_id = :userId', { userId })
-              .leftJoinAndSelect('incident.incident_type', 'type')
-              .orderBy('incident.created_at', 'DESC')
-              .take(limit)
-              .getMany();
-              
-           const dbResult = incidents.map(i => ({
-               id: i.id,
-               loai_su_co: i.incident_type?.name,
-               trang_thai: i.status,
-               mo_ta: i.description,
-               ngay_bao_cao: i.created_at
-           }));
-
-           // Gửi dữ liệu DB ngược lại cho AI để AI đọc và trả lời người dùng
-           const funcResult = await chat.sendMessage([{
-              functionResponse: {
-                 name: call.name,
-                 response: { data: dbResult }
-              }
-           }]);
-           
-           return funcResult.response.text();
-        }
-      }
-
-      // Nếu AI không cần gọi hàm, chỉ trả lời bình thường
-      return response.text();
-    } catch (error) {
-      console.error('Lỗi Chatbot:', error);
-      return "Xin lỗi, hiện tại tôi đang quá tải, không thể trò chuyện được. Vui lòng thử lại sau nhé!";
-    }
-  }
 }
