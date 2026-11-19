@@ -34,12 +34,13 @@ void main() {
     final adapter = ChatAdapter();
     final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/v1'))
       ..httpClientAdapter = adapter;
-    final reply =
-        await ChatService(dio: dio).send('Kiểm tra tình trạng', history: [
+    final reply = await ChatService(dio: dio)
+        .send('Kiểm tra tình trạng', suggestionId: 'history', history: [
       {'role': 'user', 'content': 'Phản ánh gần nhất của tôi?'}
     ]);
     expect(reply, 'Hồ sơ đang xử lý.');
     expect(adapter.request?.path, '/chat');
+    expect(adapter.request?.data['suggestion_id'], 'history');
     expect(adapter.request?.data['history'][0]['role'], 'user');
     expect(adapter.request?.receiveTimeout, const Duration(seconds: 45));
     dio.close();

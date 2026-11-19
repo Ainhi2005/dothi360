@@ -9,6 +9,7 @@ const Incidents = lazy(() => import('./pages/Incidents'));
 const IncidentDetail = lazy(() => import('./pages/IncidentDetail'));
 const Assignments = lazy(() => import('./pages/Assignments'));
 const Users = lazy(() => import('./pages/Users'));
+const ChatAssistant = lazy(() => import('./pages/ChatAssistant'));
 const Catalog = lazy(() => import('./pages/Catalog'));
 const Departments = lazy(() => import('./pages/Departments'));
 const Areas = lazy(() => import('./pages/Areas'));
@@ -53,6 +54,7 @@ export default function App() {
       <Route path="ai-performance" element={<AiPerformance/>}/>
       <Route path="notification-center" element={<NotificationCenter/>}/>
       <Route path="users" element={<Users/>}/>
+      <Route path="chat-assistant" element={<ChatAssistant/>}/>
       <Route path="officer-performance" element={<OfficerPerformance/>}/>
       <Route path="officer-operations" element={<OfficerOperations/>}/>
       <Route path="catalog" element={<Catalog/>}/>

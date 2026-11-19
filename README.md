@@ -1,5 +1,9 @@
 # Đô Thị 360
 
+## Trợ lý nghiệp vụ
+
+Trợ lý ưu tiên kịch bản và database: 16 câu hỏi có sẵn thuộc 4 nhóm, dùng chung qua `GET /api/v1/chat/suggestions` (cần đăng nhập). Mobile có nhóm câu hỏi chọn nhanh; Admin có trang `/chat-assistant` để xem và thử bộ câu hỏi. Chào hỏi, hướng dẫn, lịch sử, trạng thái và câu hỏi ngoài phạm vi được xử lý trực tiếp, không cần Gemini. Gemini chỉ hỗ trợ phân loại câu khó vào một intent cho phép; câu trả lời và truy vấn vẫn do backend quyết định. Chat không sửa dữ liệu và chỉ đọc phản ánh do tài khoản hiện tại gửi.
+
 Hệ thống phản ánh sự cố đô thị tích hợp AI.
 
 Hướng dẫn cài APK, sử dụng theo vai trò và dựng môi trường riêng: [Hướng dẫn cài đặt và sử dụng](docs/HUONG_DAN_CAI_DAT_SU_DUNG_VA_TRIEN_KHAI.md).

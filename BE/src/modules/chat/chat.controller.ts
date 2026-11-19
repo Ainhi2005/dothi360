@@ -1,11 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import { ChatService } from './chat.service';
+import { chatSuggestions } from './chat.catalog';
 
 const chatService = new ChatService();
+export const getChatSuggestions = (_req: Request, res: Response) => {
+  res.json({ success: true, data: chatSuggestions() });
+};
 
 export const chatWithBot = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { message, history } = req.body;
+    const { message, history, suggestion_id } = req.body;
     const userId = (req as any).user.id;
 
     if (!message) {
@@ -13,7 +17,7 @@ export const chatWithBot = async (req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    const result = await chatService.reply(userId, message, history);
+    const result = await chatService.reply(userId, message, history, suggestion_id);
 
     res.status(200).json({
       success: true,
