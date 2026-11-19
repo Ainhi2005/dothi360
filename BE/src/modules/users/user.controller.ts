@@ -3,6 +3,13 @@ import { UserService } from './user.service';
 
 const userService = new UserService();
 
+export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await userService.resetPassword(String(req.params.id), req.user.id, req.body);
+    res.json({ success: true, message: 'Đã đổi mật khẩu và thu hồi các phiên đăng nhập cũ', data });
+  } catch (error) { next(error); }
+};
+
 export const getAll = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await userService.findAll(req.query);

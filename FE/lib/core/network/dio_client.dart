@@ -39,9 +39,17 @@ class DioClient {
           return handler.next(response);
         },
         onError: (DioException e, handler) async {
+          if (e.response?.statusCode == 428 &&
+              e.response?.data is Map &&
+              e.response?.data['code'] == 'PASSWORD_CHANGE_REQUIRED') {
+            await TokenStorage().savePasswordChangeRequired(true);
+          }
           final alreadyRetried = e.requestOptions.extra['retried'] == true;
           final isAuth = e.requestOptions.path.contains('/auth/login') ||
               e.requestOptions.path.contains('/auth/refresh');
+          if (e.response?.statusCode == 401 && alreadyRetried && !isAuth) {
+            await TokenStorage().deleteToken();
+          }
           if (e.response?.statusCode == 401 && !alreadyRetried && !isAuth) {
             final storage = TokenStorage();
             final currentToken = await storage.getToken();
@@ -87,16 +95,27 @@ class DioClient {
     final refresh = await TokenStorage().getRefreshToken();
     if (refresh == null) return null;
     try {
-      final clean = Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl));
+      final clean = Dio(BaseOptions(
+        baseUrl: AppConfig.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+      ));
       final response =
           await clean.post('/auth/refresh', data: {'refresh_token': refresh});
       final access = response.data['data']['access_token']?.toString();
       final rotated = response.data['data']['refresh_token']?.toString();
       if (access != null) await TokenStorage().saveToken(access);
       if (rotated != null) await TokenStorage().saveRefreshToken(rotated);
+      if (access != null) {
+        await TokenStorage().savePasswordChangeRequired(
+            response.data['data']['user']?['must_change_password'] == true);
+      }
       return access;
-    } on DioException {
-      await TokenStorage().deleteToken();
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 401 ||
+          error.response?.statusCode == 403) {
+        await TokenStorage().deleteToken();
+      }
       return null;
     }
   }

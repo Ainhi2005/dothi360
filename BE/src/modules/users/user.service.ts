@@ -1,9 +1,31 @@
 import { AppDataSource } from '../../database/data-source';
 import { User } from './user.entity';
 import * as argon2 from 'argon2';
+import { RefreshToken } from '../auth/refresh-token.entity';
+import { AuditLogService } from '../audit-logs/audit-log.service';
+import { z } from 'zod';
 
 export class UserService {
   private repository = AppDataSource.getRepository(User);
+
+  async resetPassword(id: string, actorId: string, data: { new_password: string; must_change_password: boolean }) {
+    if (!z.uuid().safeParse(id).success) throw { statusCode: 400, message: 'ID người dùng không hợp lệ' };
+    const hash = await argon2.hash(data.new_password);
+    return AppDataSource.transaction(async manager => {
+      const users = manager.getRepository(User);
+      const actor = await users.findOne({ where: { id: actorId } });
+      if (!actor?.is_active || actor.role !== 'ADMIN') throw { statusCode: 403, message: 'Chỉ quản trị viên được đổi mật khẩu tài khoản' };
+      const user = await users.findOne({ where: { id }, lock: { mode: 'pessimistic_write' } });
+      if (!user) throw { statusCode: 404, message: 'Không tìm thấy người dùng' };
+      user.password_hash = hash;
+      user.must_change_password = data.must_change_password;
+      await users.save(user);
+      await manager.getRepository(RefreshToken).update({ user_id: id }, { revoked_at: new Date() });
+      await new AuditLogService().record({ user_id: actorId, action: 'USER_PASSWORD_RESET', entity_type: 'user', entity_id: id,
+        details: { target_role: user.role, must_change_password: user.must_change_password, self: actorId === id } }, manager);
+      return { id, must_change_password: user.must_change_password, requires_relogin: actorId === id };
+    });
+  }
 
   async findAll(query:any={}) {
     const page=Math.max(Number(query.page)||1,1),limit=Math.min(Math.max(Number(query.limit)||20,1),100);const qb=this.repository.createQueryBuilder('u').select(['u.id','u.full_name','u.email','u.phone','u.role','u.department_id','u.is_active','u.created_at']).orderBy('u.created_at','DESC').skip((page-1)*limit).take(limit);if(query.role)qb.andWhere('u.role=:role',{role:query.role});if(query.search)qb.andWhere('(u.full_name ILIKE :s OR u.email ILIKE :s)',{s:`%${query.search}%`});const[data,total]=await qb.getManyAndCount();return{data,total,page,limit,totalPages:Math.ceil(total/limit)};

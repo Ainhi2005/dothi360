@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
 
-class TokenStorage {
+class TokenStorage extends ChangeNotifier {
   static final TokenStorage _instance = TokenStorage._internal();
   factory TokenStorage() => _instance;
   TokenStorage._internal();
@@ -9,6 +10,15 @@ class TokenStorage {
   static const String _tokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _roleKey = 'user_role';
+  static const String _passwordChangeKey = 'must_change_password';
+
+  Future<void> savePasswordChangeRequired(bool required) async {
+    await _storage.write(key: _passwordChangeKey, value: required.toString());
+    notifyListeners();
+  }
+
+  Future<bool> passwordChangeRequired() async =>
+      await _storage.read(key: _passwordChangeKey) == 'true';
 
   Future<void> saveToken(String token) async {
     await _storage.write(key: _tokenKey, value: token);
@@ -45,6 +55,8 @@ class TokenStorage {
       _storage.delete(key: _tokenKey),
       _storage.delete(key: _refreshTokenKey),
       _storage.delete(key: _roleKey),
+      _storage.delete(key: _passwordChangeKey),
     ]);
+    notifyListeners();
   }
 }

@@ -7,6 +7,8 @@ import crypto from 'crypto';
 import { env } from '../../config/env';
 import { ROLES } from '../../constants/roles';
 import { assertUserIsActive, isRefreshTokenUsable } from './auth.policy';
+import { credentialVersion } from './credential-version';
+import { EntityManager } from 'typeorm';
 
 export class AuthService {
   private userRepository = AppDataSource.getRepository(User);
@@ -33,18 +35,20 @@ export class AuthService {
   }
 
   async login(data: any) {
-    const user = await this.userRepository.findOne({ where: { email: data.email } });
-    if (!user) {
-      throw { statusCode: 401, message: 'Email hoặc mật khẩu không đúng' };
-    }
-    assertUserIsActive(user);
+    return AppDataSource.transaction(async manager => {
+      const user = await manager.getRepository(User).findOne({ where: { email: data.email }, lock: { mode: 'pessimistic_write' } });
+      if (!user) {
+        throw { statusCode: 401, message: 'Email hoặc mật khẩu không đúng' };
+      }
+      assertUserIsActive(user);
 
-    const isPasswordValid = await argon2.verify(user.password_hash, data.password);
-    if (!isPasswordValid) {
-      throw { statusCode: 401, message: 'Email hoặc mật khẩu không đúng' };
-    }
+      const isPasswordValid = await argon2.verify(user.password_hash, data.password);
+      if (!isPasswordValid) {
+        throw { statusCode: 401, message: 'Email hoặc mật khẩu không đúng' };
+      }
 
-    return this.generateTokens(user);
+      return this.generateTokens(user, manager);
+    });
   }
 
   async refresh(refreshTokenStr: string) {
@@ -55,18 +59,23 @@ export class AuthService {
       throw { statusCode: 401, message: 'Refresh token không hợp lệ hoặc đã hết hạn' };
     }
 
-    const user = await this.userRepository.findOne({ where: { id: tokenRecord.user_id } });
-    if (!user || !user.is_active) {
-      throw { statusCode: 401, message: 'Người dùng không tồn tại hoặc bị khóa' };
-    }
+    return AppDataSource.transaction(async manager => {
+      const user = await manager.getRepository(User).findOne({ where: { id: tokenRecord.user_id }, lock: { mode: 'pessimistic_write' } });
+      if (!user || !user.is_active) {
+        throw { statusCode: 401, message: 'Người dùng không tồn tại hoặc bị khóa' };
+      }
 
-    const tokens = await this.generateTokens(user);
-    tokenRecord.revoked_at = new Date();
-    const replacementHash = crypto.createHash('sha256').update(tokens.refresh_token).digest('hex');
-    const replacement = await this.tokenRepository.findOne({ where: { token_hash: replacementHash } });
-    tokenRecord.replaced_by_id = replacement?.id ?? null;
-    await this.tokenRepository.save(tokenRecord);
-    return tokens;
+      const tokensRepo = manager.getRepository(RefreshToken);
+      const lockedToken = await tokensRepo.findOne({ where: { id: tokenRecord.id }, lock: { mode: 'pessimistic_write' } });
+      if (!lockedToken || !isRefreshTokenUsable(lockedToken)) throw { statusCode: 401, message: 'Refresh token không hợp lệ hoặc đã hết hạn' };
+      const tokens = await this.generateTokens(user, manager);
+      lockedToken.revoked_at = new Date();
+      const replacementHash = crypto.createHash('sha256').update(tokens.refresh_token).digest('hex');
+      const replacement = await tokensRepo.findOne({ where: { token_hash: replacementHash } });
+      lockedToken.replaced_by_id = replacement?.id ?? null;
+      await tokensRepo.save(lockedToken);
+      return tokens;
+    });
   }
 
   async logout(refreshTokenStr: string) {
@@ -75,19 +84,22 @@ export class AuthService {
   }
 
   async changePassword(userId: string, currentPassword: string, newPassword: string) {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user || !(await argon2.verify(user.password_hash, currentPassword))) {
-      throw { statusCode: 400, message: 'Mật khẩu hiện tại không đúng' };
-    }
-    user.password_hash = await argon2.hash(newPassword);
-    user.must_change_password = false;
-    await this.userRepository.save(user);
-    await this.tokenRepository.update({ user_id: userId }, { revoked_at: new Date() });
+    await AppDataSource.transaction(async manager => {
+      const users = manager.getRepository(User);
+      const user = await users.findOne({ where: { id: userId }, lock: { mode: 'pessimistic_write' } });
+      if (!user || !(await argon2.verify(user.password_hash, currentPassword))) {
+        throw { statusCode: 400, message: 'Mật khẩu hiện tại không đúng' };
+      }
+      user.password_hash = await argon2.hash(newPassword);
+      user.must_change_password = false;
+      await users.save(user);
+      await manager.getRepository(RefreshToken).update({ user_id: userId }, { revoked_at: new Date() });
+    });
   }
 
-  private async generateTokens(user: User) {
+  private async generateTokens(user: User, manager: EntityManager = AppDataSource.manager) {
     const accessToken = jwt.sign(
-      { id: user.id, role: user.role, department_id: user.department_id, must_change_password: user.must_change_password },
+      { id: user.id, role: user.role, department_id: user.department_id, must_change_password: user.must_change_password, credential_version: credentialVersion(user.password_hash) },
       env.JWT_ACCESS_SECRET,
       { expiresIn: env.JWT_ACCESS_EXPIRES_IN as SignOptions['expiresIn'] }
     );
@@ -99,12 +111,13 @@ export class AuthService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    const newTokenRecord = this.tokenRepository.create({
+    const tokensRepo = manager.getRepository(RefreshToken);
+    const newTokenRecord = tokensRepo.create({
       user_id: user.id,
       token_hash: hashedRefreshToken,
       expires_at: expiresAt,
     });
-    await this.tokenRepository.save(newTokenRecord);
+    await tokensRepo.save(newTokenRecord);
 
     const { password_hash, ...userProfile } = user;
 

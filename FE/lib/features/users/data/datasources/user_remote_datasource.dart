@@ -1,4 +1,5 @@
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/utils/token_storage.dart';
 import '../models/user_profile_model.dart';
 
 class UserRemoteDataSource {
@@ -24,5 +25,6 @@ class UserRemoteDataSource {
       'current_password': currentPassword,
       'new_password': newPassword,
     });
+    await TokenStorage().deleteToken();
   }
 }

@@ -67,6 +67,8 @@ class AuthController extends Notifier<AuthState> {
           if (role != null) {
             await TokenStorage().saveRole(role);
           }
+          await TokenStorage().savePasswordChangeRequired(
+              response.data['data']['user']?['must_change_password'] == true);
           await PushNotificationService.instance.registerCurrentDevice();
           ref.invalidate(userProfileProvider);
           state = state.copyWith(

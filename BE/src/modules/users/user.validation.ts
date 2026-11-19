@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { ROLES } from '../../common/constants/roles';
 
+export const resetUserPasswordSchema = z.object({
+  new_password: z.string().min(10, 'Mật khẩu mới phải từ 10 ký tự').max(128, 'Mật khẩu tối đa 128 ký tự'),
+  must_change_password: z.boolean().default(false),
+});
+
 export const createUserSchema = z.object({
   full_name: z.string().min(2, 'Tên quá ngắn'),
   email: z.string().email('Email không đúng định dạng').toLowerCase(),

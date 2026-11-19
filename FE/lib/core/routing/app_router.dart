@@ -44,10 +44,16 @@ import '../../features/utilities/presentation/pages/departments_directory_page.d
 
 final appRouter = GoRouter(
   initialLocation: AppRoutes.login,
+  refreshListenable: TokenStorage(),
   redirect: (context, state) async {
     final token = await TokenStorage().getToken();
     final role = await TokenStorage().getRole();
     final isLoggedIn = token != null && token.isNotEmpty;
+    if (isLoggedIn && await TokenStorage().passwordChangeRequired()) {
+      return state.matchedLocation == AppRoutes.changePassword
+          ? null
+          : AppRoutes.changePassword;
+    }
 
     final isAuthRoute = state.matchedLocation == AppRoutes.login ||
         state.matchedLocation == AppRoutes.register ||
