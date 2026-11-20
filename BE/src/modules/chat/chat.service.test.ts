@@ -117,11 +117,18 @@ test('AI diễn đạt hồ sơ sau khi backend đọc theo đúng tài khoản 
   assert.equal(result.mode, 'AI'); assert.match(result.reply, /Trạng thái hệ thống/); assert.match(result.reply, /Chờ Admin nghiệm thu/);
 });
 test('AI bịa mã hồ sơ, trạng thái hoàn tất hoặc ngày hẹn thì trả dữ liệu mẫu', async () => {
-  for (const text of ['Hồ sơ #PA-2611-999 đã hoàn tất!', 'Hồ sơ đã hoàn tất.', 'Sẽ hoàn thành vào ngày mai.']) {
+  for (const text of ['Hồ sơ #PA-2611-999 đã hoàn tất!', 'Hồ sơ đã hoàn tất.', 'Sẽ hoàn thành vào ngày mai.', 'Tôi đã duyệt hồ sơ cho bạn.']) {
     let calls = 0;
     const service = new ChatService(async () => ({ output_text: ++calls === 1 ? '{"intent":"latest"}' : JSON.stringify({ reply: text, report_ids: ['known-id'] }) }),
       async () => [{ id: 'known-id', incident_code: '#PA-2611-ABC', status: 'IN_PROGRESS', description: 'Đèn hỏng' }], ['model']);
     const result = await service.reply('caller', 'Hồ sơ gần nhất sao rồi?');
     assert.equal(result.mode, 'DATABASE'); assert.equal(result.degraded, true); assert.match(result.reply, /Đang xử lý/);
   }
+});
+test('câu hỏi tiến độ chung không bị AI lọc nhầm thành chỉ hồ sơ đang xử lý', async () => {
+  let calls = 0;
+  const service = new ChatService(async () => ({ output_text: ++calls === 1 ? '{"intent":"active"}' : '{"reply":"Hồ sơ đã hoàn tất.","report_ids":["known"]}' }),
+    async (_caller, _limit, status) => { assert.equal(status, undefined); return [{ id: 'known', incident_code: '#PA-2611-ABC', status: 'RESOLVED', description: 'Đèn đường' }]; }, ['model']);
+  const result = await service.reply('caller', 'Các phản ánh của tôi đã xử lý tới đâu rồi?');
+  assert.equal(result.intent, 'history'); assert.equal(result.mode, 'AI');
 });
