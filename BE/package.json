@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "test": "npm run build && node --test --test-concurrency=1 dist/common/constants/incident-status.test.js dist/modules/auth/auth.policy.test.js dist/modules/incidents/incident.policy.test.js dist/modules/media/media.validation.test.js dist/config/database-connection.test.js dist/common/hosting/admin-static.test.js dist/modules/chat/chat.service.test.js",
-    "test:integration": "npm run build && node --test --test-concurrency=1 dist/database/p0.integration.test.js dist/modules/notifications/notification.integration.test.js dist/modules/users/user-password.integration.test.js dist/modules/chat/chat.integration.test.js",
+    "test:integration": "npm run build && node --test --test-concurrency=1 dist/database/p0.integration.test.js dist/modules/incidents/incident-lifecycle.integration.test.js dist/modules/notifications/notification.integration.test.js dist/modules/users/user-password.integration.test.js dist/modules/chat/chat.integration.test.js",
     "migration:run": "npm run build && typeorm migration:run -d dist/database/data-source.js",
     "migration:revert": "npm run build && typeorm migration:revert -d dist/database/data-source.js",
     "migration:show": "npm run build && typeorm migration:show -d dist/database/data-source.js",

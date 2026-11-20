@@ -5,100 +5,15 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/network/dio_client.dart';
+import '../../data/datasources/incident_report_remote_datasource.dart';
+import 'create_report_state.dart';
+export 'create_report_state.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
-class CreateReportState {
-  final File? image;
-  final List<File> media;
-  final LatLng? location;
-  final String description;
-  final bool isLoading;
-  final String? error;
-  final bool isSuccess;
-  final Map<String, dynamic>? responseData;
-  final String? address;
-  final List<Map<String, dynamic>> incidentTypes;
-  final String? incidentTypeId;
-  final double uploadProgress;
-  final Map<String, dynamic>? aiAnalysis;
-  final List<Map<String, dynamic>> uploadedMedia;
-  final bool isAnalyzing;
-  final String analysisStage;
-  final bool isAiConfirmed;
-  final String locationSource;
-
-  CreateReportState({
-    this.image,
-    this.media = const [],
-    this.location,
-    this.description = '',
-    this.isLoading = false,
-    this.error,
-    this.isSuccess = false,
-    this.responseData,
-    this.address,
-    this.incidentTypes = const [],
-    this.incidentTypeId,
-    this.uploadProgress = 0,
-    this.aiAnalysis,
-    this.uploadedMedia = const [],
-    this.isAnalyzing = false,
-    this.analysisStage = 'idle',
-    this.isAiConfirmed = false,
-    this.locationSource = 'GPS',
-  });
-
-  CreateReportState copyWith({
-    File? image,
-    bool clearImage = false,
-    LatLng? location,
-    String? description,
-    bool? isLoading,
-    String? error,
-    bool clearError = false,
-    bool? isSuccess,
-    Map<String, dynamic>? responseData,
-    String? address,
-    bool clearAddress = false,
-    List<File>? media,
-    List<Map<String, dynamic>>? incidentTypes,
-    String? incidentTypeId,
-    double? uploadProgress,
-    Map<String, dynamic>? aiAnalysis,
-    bool clearAiAnalysis = false,
-    List<Map<String, dynamic>>? uploadedMedia,
-    bool? isAnalyzing,
-    String? analysisStage,
-    bool? isAiConfirmed,
-    String? locationSource,
-  }) {
-    return CreateReportState(
-      image: clearImage ? null : (image ?? this.image),
-      media: clearImage ? const [] : (media ?? this.media),
-      location: location ?? this.location,
-      description: description ?? this.description,
-      isLoading: isLoading ?? this.isLoading,
-      error: clearError ? null : (error ?? this.error),
-      isSuccess: isSuccess ?? this.isSuccess,
-      responseData: responseData ?? this.responseData,
-      address: clearAddress ? null : (address ?? this.address),
-      incidentTypes: incidentTypes ?? this.incidentTypes,
-      incidentTypeId: incidentTypeId ?? this.incidentTypeId,
-      uploadProgress: uploadProgress ?? this.uploadProgress,
-      aiAnalysis: clearAiAnalysis ? null : (aiAnalysis ?? this.aiAnalysis),
-      uploadedMedia: uploadedMedia ?? this.uploadedMedia,
-      isAnalyzing: isAnalyzing ?? this.isAnalyzing,
-      analysisStage: analysisStage ?? this.analysisStage,
-      isAiConfirmed: isAiConfirmed ?? this.isAiConfirmed,
-      locationSource: locationSource ?? this.locationSource,
-    );
-  }
-}
-
 class CreateReportController extends Notifier<CreateReportState> {
+  final _remote = IncidentReportRemoteDataSource();
   static const _draftKey = 'incident_draft';
   final _storage = const FlutterSecureStorage();
   @override
@@ -155,9 +70,8 @@ class CreateReportController extends Notifier<CreateReportState> {
 
   Future<void> loadIncidentTypes() async {
     try {
-      final r = await DioClient().dio.get('/incident-types');
-      state = state.copyWith(
-          incidentTypes: List<Map<String, dynamic>>.from(r.data['data']));
+      final types = await _remote.loadIncidentTypes();
+      state = state.copyWith(incidentTypes: types);
     } catch (_) {}
   }
 
@@ -307,12 +221,8 @@ class CreateReportController extends Notifier<CreateReportState> {
     var lastProgressPercent = -1;
     for (var i = 0; i < files.length; i++) {
       final file = files[i];
-      final form = FormData.fromMap({
-        'file': await MultipartFile.fromFile(file.path,
-            filename: file.path.split(Platform.pathSeparator).last)
-      });
-      final response = await DioClient().dio.post('/media/upload', data: form,
-          onSendProgress: (sent, total) {
+      final uploadedMedia =
+          await _remote.upload(file, onSendProgress: (sent, total) {
         if (total <= 0) return;
         final progress = ((i + sent / total) / files.length).clamp(0.0, 1.0);
         final percent = (progress * 100).floor();
@@ -323,7 +233,7 @@ class CreateReportController extends Notifier<CreateReportState> {
           analysisStage: 'uploading',
         );
       });
-      uploaded.add(Map<String, dynamic>.from(response.data['data']));
+      uploaded.add(uploadedMedia);
     }
     state = state.copyWith(uploadedMedia: uploaded);
     return uploaded;
@@ -341,11 +251,7 @@ class CreateReportController extends Notifier<CreateReportState> {
     try {
       final uploaded = await _ensureUploaded();
       state = state.copyWith(analysisStage: 'analyzing');
-      final response = await DioClient().dio.post('/incidents/analyze', data: {
-        'description': state.description,
-        'media_urls': uploaded,
-      });
-      final analysis = Map<String, dynamic>.from(response.data['data']);
+      final analysis = await _remote.analyze(state.description, uploaded);
       final suggested = analysis['suggested_incident_type']?.toString();
       String? suggestedId;
       if (suggested != null) {
@@ -509,8 +415,6 @@ class CreateReportController extends Notifier<CreateReportState> {
     var uploadedMedia = <Map<String, dynamic>>[];
 
     try {
-      final dio = DioClient().dio;
-
       uploadedMedia = await _ensureUploaded();
 
       // 2. Tạo sự cố
@@ -541,15 +445,12 @@ class CreateReportController extends Notifier<CreateReportState> {
         },
       };
 
-      final incidentResponse = await dio.post('/incidents', data: data);
-      if (incidentResponse.data['success'] == true) {
-        if (incidentResponse.data['data']?['media_attached'] == false) {
+      final result = await _remote.submit(data);
+      {
+        if (result['media_attached'] == false) {
           for (final media in uploadedMedia) {
             try {
-              await dio.delete('/media/upload', data: {
-                'storage_key': media['storage_key'],
-                'type': media['type'],
-              });
+              await _remote.deleteUpload(media);
             } catch (_) {}
           }
           uploadedMedia.clear();
@@ -557,19 +458,14 @@ class CreateReportController extends Notifier<CreateReportState> {
         state = state.copyWith(
           isLoading: false,
           isSuccess: true,
-          responseData: incidentResponse.data['data'],
+          responseData: result,
         );
         await _storage.delete(key: _draftKey);
-      } else {
-        throw incidentResponse.data['message'] ?? 'Lỗi không xác định';
       }
     } catch (e) {
       for (final media in uploadedMedia) {
         try {
-          await DioClient().dio.delete('/media/upload', data: {
-            'storage_key': media['storage_key'],
-            'type': media['type'],
-          });
+          await _remote.deleteUpload(media);
         } catch (_) {}
       }
       try {

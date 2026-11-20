@@ -1,7 +1,2 @@
-export const ROLES = {
-  CITIZEN: 'CITIZEN',
-  OFFICER: 'OFFICER',
-  ADMIN: 'ADMIN',
-} as const;
-
-export type RoleType = keyof typeof ROLES;
+// Giữ đường dẫn import cũ; định nghĩa vai trò chỉ nằm tại một nơi.
+export { ROLES, type RoleType } from "../common/constants/roles";

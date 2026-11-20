@@ -1,0 +1,6 @@
+# Workspace chứa cả sản phẩm và bản sao phục vụ đối chiếu.
+# Chỉ loại thư mục nháp/sao lưu; FE vẫn dùng bộ flutter_lints riêng.
+analyzer:
+  exclude:
+    - scratch/**
+    - BE/scratch/**
