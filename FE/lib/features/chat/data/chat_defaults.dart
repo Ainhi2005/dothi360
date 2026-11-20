@@ -5,7 +5,7 @@ class ChatDefaults {
   static const welcome =
       'Xin chào! Tôi hỗ trợ sử dụng Đô Thị 360 và tra cứu phản ánh của chính bạn. Chọn câu hỏi gợi ý để nhận hỗ trợ nhanh hoặc nhập câu hỏi của bạn.';
   static const suggestionTitle = 'Câu hỏi gợi ý';
-  static const inputHint = 'Hỏi về phản ánh hoặc cách sử dụng...';
+  static const inputHint = 'Nhập câu hỏi để AI hỗ trợ...';
   static const scrollDuration = Duration(milliseconds: 200);
   static const panelHeightFraction = .26;
   // Available while the shared server catalog is loading or temporarily unavailable.

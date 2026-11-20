@@ -13,10 +13,10 @@ export default function ChatAssistant() {
     const history = messages.slice(-10).map(({ role, content }) => ({ role, content: content.slice(0, 2000) }));
     setMessages(items => [...items, { role: 'user', content: text }]); setQuestion(''); setBusy(true); setError('');
     try {
-      const response = await api.post('/chat', { message: text, history, ...(suggestion ? { suggestion_id: suggestion.id } : {}) });
+      const response = await api.post('/chat', { message: text, history, ...(suggestion ? { suggestion_id: suggestion.id } : {}) }, { timeout: 40000 });
       const result = response.data.data;
       setMessages(items => [...items, { role: 'assistant', content: result.reply,
-        source: result.ai_used ? (result.model ? 'Gemini hỗ trợ nhận diện ý định' : 'AI chưa nhận diện được, đã chuyển sang gợi ý có sẵn') : result.mode === 'DATABASE' ? 'Truy vấn database, không gọi AI' : 'Kịch bản, không gọi AI' }]);
+        source: result.mode === 'AI' ? 'Gemini phân tích và trả lời dựa trên dữ liệu hệ thống' : result.ai_used ? 'AI chưa trả lời được, dùng nội dung dự phòng đã kiểm tra' : result.mode === 'DATABASE' ? 'Truy vấn database, không gọi AI' : 'Kịch bản, không gọi AI' }]);
     } catch (cause) { setError(errorMessage(cause)); }
     finally { setBusy(false); }
   }

@@ -2,7 +2,7 @@
 
 ## Trợ lý nghiệp vụ
 
-Trợ lý ưu tiên kịch bản và database: 16 câu hỏi có sẵn thuộc 4 nhóm, dùng chung qua `GET /api/v1/chat/suggestions` (cần đăng nhập). Mobile có nhóm câu hỏi chọn nhanh; Admin có trang `/chat-assistant` để xem và thử bộ câu hỏi. Chào hỏi, hướng dẫn, lịch sử, trạng thái và câu hỏi ngoài phạm vi được xử lý trực tiếp, không cần Gemini. Gemini chỉ hỗ trợ phân loại câu khó vào một intent cho phép; câu trả lời và truy vấn vẫn do backend quyết định. Chat không sửa dữ liệu và chỉ đọc phản ánh do tài khoản hiện tại gửi.
+Trợ lý có hai luồng: 16 câu hỏi gợi ý trong 4 nhóm đi thẳng tới kịch bản/database, không gọi Gemini; câu nhập tay được Gemini nhận diện ý định và diễn đạt câu trả lời theo hướng dẫn/dữ liệu backend. Bộ gợi ý dùng chung qua `GET /api/v1/chat/suggestions` (cần đăng nhập). Admin có trang `/chat-assistant` để xem và thử cả hai luồng. Backend giữ quyền truy cập, chỉ đọc phản ánh do tài khoản hiện tại gửi; chatbot không sửa hoặc duyệt hồ sơ. Câu trả lời AI được đối chiếu mã hồ sơ, tham chiếu nguồn và các trạng thái rõ ràng; có phần trạng thái hệ thống để đối chiếu. Khi Gemini lỗi hoặc kết quả không đạt kiểm tra, dùng nội dung mẫu đã xác minh.
 
 Hệ thống phản ánh sự cố đô thị tích hợp AI.
 

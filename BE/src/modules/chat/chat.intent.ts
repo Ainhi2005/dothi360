@@ -19,6 +19,7 @@ export function matchIntent(message: string, history: ChatHistory = []): Recogni
   if (/(cach|lam sao|huong dan|can|khong duoc|loi)/.test(text) && /vi tri|dinh vi|toa do|gps|ban do/.test(text)) return 'location';
   if (/\bai\b|phan tich anh/.test(text) && /anh|xac nhan|goi y|nhan dien/.test(text)) return 'ai_analysis';
   if (/anh/.test(text) && /chup|dinh kem|tai len|upload|dung luong|dinh dang/.test(text)) return 'upload_photo';
+  if (/cot den|den duong|o ga|ho ga|cay do|day dien|ngap|rac thai/.test(text) && /lam gi|bao.*dau|nghieng|ngieng|mat nap/.test(text)) return 'send_report';
   if (/cach|lam sao|huong dan|muon gui|tao phan anh/.test(text) && /gui|tao|bao cao/.test(text) && /phan anh|su co|bao cao/.test(text)) return 'send_report';
   if (/lich su|danh sach.*(phan anh|ho so)|tat ca phan anh/.test(text)) return 'history';
   if (/cho.*nghiem thu|cho.*duyet/.test(text)) return 'pending_verification';
