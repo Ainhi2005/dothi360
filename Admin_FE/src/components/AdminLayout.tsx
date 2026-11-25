@@ -14,7 +14,6 @@ import {
   Menu,
   PhoneCall,
   ShieldAlert,
-  Sliders,
   Users,
   X,
 } from 'lucide-react';
@@ -39,9 +38,7 @@ const navigation = [
       ['/departments', 'Đơn vị xử lý', Building2],
       ['/users', 'Người dùng & Cán bộ', Users],
       ['/catalog', 'Loại sự cố', FolderCog],
-      ['/ai-performance', 'Hiệu năng AI', BrainCircuit],
       ['/chat-assistant', 'Trợ lý đô thị', BrainCircuit],
-      ['/system', 'Cấu hình & Nhật ký', Sliders],
     ],
   },
   {
