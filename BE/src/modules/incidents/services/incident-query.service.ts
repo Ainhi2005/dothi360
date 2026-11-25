@@ -17,6 +17,46 @@ import { IncidentServiceDependencies } from "./incident-dependencies";
 export class IncidentQueryService {
   constructor(private readonly deps: IncidentServiceDependencies) {}
 
+  async findNearby(latitude: number, longitude: number, radiusM = 10000) {
+    if (
+      !Number.isFinite(latitude) || Math.abs(latitude) > 90 ||
+      !Number.isFinite(longitude) || Math.abs(longitude) > 180 ||
+      !Number.isFinite(radiusM) || radiusM < 200 || radiusM > 100000
+    ) {
+      throw { statusCode: 400, message: "Tọa độ hoặc bán kính tìm kiếm không hợp lệ" };
+    }
+    const point = "ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography";
+    const result = await this.deps.incidentRepo.createQueryBuilder("incident")
+      .leftJoinAndSelect("incident.incident_type", "type")
+      .addSelect(`ST_Distance(incident.location, ${point})`, "distance_m")
+      .addSelect(`(SELECT m.file_url FROM incident_media m
+        WHERE m.incident_id = incident.id AND m.media_type = 'IMAGE'
+        ORDER BY m.created_at ASC, m.id ASC LIMIT 1)`, "cover_url")
+      .addSelect(`(SELECT r.reported_address FROM incident_reports r
+        WHERE r.incident_id = incident.id AND NULLIF(TRIM(r.reported_address), '') IS NOT NULL
+        ORDER BY r.created_at ASC, r.id ASC LIMIT 1)`, "reported_address")
+      .where("incident.status NOT IN (:...closed)", {
+        closed: ["RESOLVED", "REJECTED", "CANCELLED"],
+      })
+      .andWhere(`ST_DWithin(incident.location, ${point}, :radiusM)`)
+      .setParameters({ latitude, longitude, radiusM })
+      .orderBy("distance_m", "ASC")
+      .addOrderBy("incident.created_at", "DESC")
+      .addOrderBy("incident.id", "ASC")
+      .limit(8)
+      .getRawAndEntities();
+    const details = new Map(result.raw.map(row => [row.incident_id, row]));
+    return result.entities.map(incident => {
+      const row = details.get(incident.id)!;
+      return {
+        ...incident,
+        distance_m: Number(row.distance_m),
+        cover_url: row.cover_url ?? null,
+        address: row.reported_address ?? null,
+      };
+    });
+  }
+
   async findAll(query: any) {
     const page = Math.max(Number(query.page) || 1, 1);
     const limit = Math.min(Math.max(Number(query.limit) || 20, 1), 100);

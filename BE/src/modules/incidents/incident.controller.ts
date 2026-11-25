@@ -35,6 +35,20 @@ export const getMyReports = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
+export const getNearbyIncidents = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const parseCoordinate = (value: unknown) =>
+      typeof value === 'string' && value.trim() !== '' ? Number(value) : NaN;
+    const latitude = parseCoordinate(req.query.lat);
+    const longitude = parseCoordinate(req.query.lng);
+    const radiusM = req.query.radius_m === undefined ? 10000 : parseCoordinate(req.query.radius_m);
+    const data = await incidentService.findNearby(latitude, longitude, radiusM);
+    res.json({ success: true, data, radius_m: radiusM });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getIncidentDetail = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await incidentService.findOneForViewer(String(req.params.id), req.user);

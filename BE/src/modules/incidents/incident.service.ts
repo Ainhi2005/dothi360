@@ -54,6 +54,10 @@ export class IncidentService {
     return this.query.findAll(query);
   }
 
+  async findNearby(latitude: number, longitude: number, radiusM?: number) {
+    return this.query.findNearby(latitude, longitude, radiusM);
+  }
+
   async findOne(id: string) {
     return this.query.findOne(id);
   }

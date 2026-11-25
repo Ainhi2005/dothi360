@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { getNearbyIncidents } from './incident.controller';
 import { createReport, analyzeReport, getAllIncidents, getMyReports, getIncidentDetail, getIncidentsByBbox, updateStatus, getManualReviewQueue, reviewIncidentReport, reanalyzeIncident, verifyIncident, addIncidentProgress, endorseIncident } from './incident.controller';
 import { validateBody } from '../../common/middlewares/validate.middleware';
 import { createIncidentReportSchema } from './incident.validation';
@@ -12,6 +13,7 @@ const incidentRouter = Router();
 
 // Lấy danh sách map bbox (Không cần login để xem trên bản đồ)
 incidentRouter.get('/map/bbox', getIncidentsByBbox);
+incidentRouter.get('/nearby', getNearbyIncidents);
 // Danh sách chung
 incidentRouter.get('/', getAllIncidents);
 // Route cụ thể phải đứng trước /:id để không coi "me" là ID sự cố.
